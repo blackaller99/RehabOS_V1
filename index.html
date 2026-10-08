@@ -201,7 +201,10 @@
         <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl">
             <div class="px-6 py-4 border-b border-slate-800 flex justify-between items-center bg-slate-950">
                 <h3 class="font-bold text-white text-sm flex items-center space-x-2">
-                    <i class="ri-user-add-line text-indigo-400"></i><span>Registrar Nuevo Paciente</span>
+                    <i class="ri-user-add-line text-indigo-400"></i><button onclick="abrirModalPaciente()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-4 py-2.5 rounded-lg shadow-lg flex items-center space-x-2 transition">
+    <i class="ri-user-add-line"></i><span>+ Nuevo Paciente</span>
+</button>
+
                 </h3>
                 <button onclick="cerrarModalPaciente()" class="text-slate-400 hover:text-white"><i class="ri-close-line text-lg"></i></button>
             </div>
@@ -286,6 +289,67 @@
                 </div>
             </section>
         </div>
+    <!-- VENTANA FLOTANTE (MODAL) PARA REGISTRAR NUEVO PACIENTE -->
+    <div id="modal-paciente" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl">
+            <div class="px-6 py-4 border-b border-slate-800 flex justify-between items-center bg-slate-950">
+                <h3 class="font-bold text-white text-sm flex items-center space-x-2">
+                    <i class="ri-user-add-line text-indigo-400"></i><span>Registrar Nuevo Paciente</span>
+                </h3>
+                <button onclick="cerrarModalPaciente()" class="text-slate-400 hover:text-white"><i class="ri-close-line text-lg"></i></button>
+            </div>
+            <form id="form-nuevo-paciente" onsubmit="guardarNuevoPaciente(event)" class="p-6 space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">No. Expediente (#)</label>
+                        <input type="number" id="nuevo-exp" required placeholder="Ej. 2" class="w-full bg-slate-950 border border-slate-700 text-xs text-white rounded-lg p-2.5 outline-none focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Estatus</label>
+                        <select id="nuevo-estatus" class="w-full bg-slate-950 border border-slate-700 text-xs text-white rounded-lg p-2.5 outline-none focus:border-indigo-500">
+                            <option value="Activo" selected>Activo</option>
+                            <option value="Egreso">Egreso</option>
+                            <option value="Baja">Baja</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Nombre Completo del Paciente</label>
+                    <input type="text" id="nuevo-nombre" required placeholder="Ej. Juan Pérez" class="w-full bg-slate-950 border border-slate-700 text-xs text-white rounded-lg p-2.5 outline-none focus:border-indigo-500">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Cuota Acordada ($)</label>
+                        <input type="number" id="nuevo-cuota" required placeholder="1500" class="w-full bg-slate-950 border border-slate-700 text-xs text-white rounded-lg p-2.5 outline-none focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Periodicidad de Pago</label>
+                        <select id="nuevo-periodo" class="w-full bg-slate-950 border border-slate-700 text-xs text-white rounded-lg p-2.5 outline-none focus:border-indigo-500">
+                            <option value="semanal" selected>Semanal</option>
+                            <option value="quincenal">Quincenal</option>
+                            <option value="mensual">Mensual</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Nombre del Familiar Resp.</label>
+                        <input type="text" id="nuevo-familiar" placeholder="Ej. María Pérez" class="w-full bg-slate-950 border border-slate-700 text-xs text-white rounded-lg p-2.5 outline-none focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Teléfono del Familiar</label>
+                        <input type="text" id="nuevo-tel" placeholder="3312345678" class="w-full bg-slate-950 border border-slate-700 text-xs text-white rounded-lg p-2.5 outline-none focus:border-indigo-500">
+                    </div>
+                </div>
+                <div class="pt-4 border-t border-slate-800 flex justify-end space-x-3">
+                    <button type="button" onclick="cerrarModalPaciente()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-lg transition">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-lg shadow-lg transition flex items-center space-x-2">
+                        <i class="ri-save-line"></i><span>Guardar en Nube</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
     </main>
 
     <!-- ========================================================================= -->
@@ -454,6 +518,42 @@
 
         // Ejecutar cálculo inicial al abrir la página
         calcularROI();
+    // FUNCIONES DEL MODAL DE REGISTRO
+        function abrirModalPaciente() {
+            document.getElementById('modal-paciente').classList.remove('hidden');
+        }
+
+        function cerrarModalPaciente() {
+            document.getElementById('modal-paciente').classList.add('hidden');
+            document.getElementById('form-nuevo-paciente').reset();
+        }
+
+        async function guardarNuevoPaciente(event) {
+            event.preventDefault();
+            const cliente = getSupabase();
+            if (!cliente) return;
+
+            const nuevoRegistro = {
+                numero_expediente: parseInt(document.getElementById('nuevo-exp').value),
+                nombre_completo: document.getElementById('nuevo-nombre').value,
+                estatus: document.getElementById('nuevo-estatus').value,
+                cuota_acordada: parseFloat(document.getElementById('nuevo-cuota').value),
+                periodicidad_pago: document.getElementById('nuevo-periodo').value,
+                nombre_familiar: document.getElementById('nuevo-familiar').value,
+                telefono_familiar: document.getElementById('nuevo-tel').value,
+                meses_tratamiento: 6
+            };
+
+            const { error } = await cliente.from('pacientes').insert([nuevoRegistro]);
+
+            if (error) {
+                alert("Error al guardar: " + error.message);
+                return;
+            }
+
+            cerrarModalPaciente();
+            cargarPacientes();
+        }
     </script>
 </body>
 </html>
