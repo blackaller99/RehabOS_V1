@@ -557,6 +557,59 @@
             cerrarModalPaciente();
             cargarPacientes();
         }
-    </script>
+    // FUNCIÓN PARA EXPORTAR LA TABLA A CSV (EXCEL)
+        async function exportarTablaACSV() {
+            const cliente = getSupabase();
+            if (!cliente) return;
+
+            try {
+                // Consultamos todos los pacientes directamente de Supabase
+                const { data: pacientes, error } = await cliente
+                    .from('pacientes')
+                    .select('*')
+                    .order('numero_expediente', { ascending: true });
+
+                if (error) throw error;
+
+                if (!pacientes || pacientes.length === 0) {
+                    alert("No hay datos para exportar.");
+                    return;
+                }
+
+                // Creamos los encabezados del CSV
+                let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; // \uFEFF asegura que Excel lea bien los acentos
+                csvContent += "No. Expediente,Nombre Completo,Estatus,Cuota Acordada,Periodicidad,Familiar Responsable,Telefono Familiar\n";
+
+                // Recorremos cada paciente para agregarlo como renglón
+                pacientes.forEach(p => {
+                    const row = [
+                        `EXP-${p.numero_expediente}`,
+                        `"${p.nombre_completo || ''}"`,
+                        p.estatus,
+                        p.cuota_acordada,
+                        p.periodicidad_pago,
+                        `"${p.nombre_familiar || ''}"`,
+                        p.telefono_familiar || ''
+                    ].join(",");
+                    csvContent += row + "\n";
+                });
+
+                // Creamos un enlace invisible para forzar la descarga en el navegador
+                const encodedUri = encodeURI(csvContent);
+                const link = document.createElement("a");
+                link.setAttribute("href", encodedUri);
+                link.setAttribute("download", "RehabOS_Directorio_Pacientes.csv");
+                document.body.appendChild(link);
+
+                link.click(); // Simula el clic para descargar
+                document.body.removeChild(link);
+
+            } catch (error) {
+                console.error("Error al exportar:", error);
+                alert("Hubo un error al generar el archivo Excel.");
+            }
+        }
+
+</script>
 </body>
 </html>
