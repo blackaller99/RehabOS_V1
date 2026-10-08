@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RehabOS V1 - Panel de Control</title>
+    <!-- Tailwind CSS (Diseño) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Iconos de RemixIcon -->
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+</head>
+<body class="bg-slate-900 text-slate-100 font-sans antialiased flex h-screen overflow-hidden">
+
+    <!-- ========================================================================= -->
+    <!-- BLOQUE 1: SIDEBAR (MENÚ LATERAL) Y NAVEGACIÓN                             -->
+    <!-- ========================================================================= -->
+    <aside class="w-64 bg-slate-950 border-r border-slate-800 flex flex-col justify-between p-4 z-20">
+        <div>
+            <!-- LOGO Y MARCA -->
+            <div class="flex items-center space-x-3 px-2 py-3 mb-6">
+                <div class="bg-indigo-600 text-white p-2 rounded-xl flex items-center justify-center font-bold text-xl shadow-lg shadow-indigo-500/30">
+                    <i class="ri-health-book-fill"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg text-white leading-none">RehabOS</h1>
+                    <span id="role-badge" class="text-[10px] uppercase font-semibold px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">Master</span>
+                </div>
+            </div>
+
+            <!-- ENLACES DE NAVEGACIÓN POR ROL -->
+            <nav class="space-y-1">
+                
+                <!-- MENU: SUPER ADMIN (ALEX) -->
+                <div id="nav-super-admin" class="nav-group space-y-1">
+                    <p class="px-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2">SaaS Global</p>
+                    <a href="#" class="nav-link flex items-center space-x-3 px-3 py-2.5 rounded-lg bg-indigo-600/10 text-indigo-400 font-medium text-sm">
+                        <i class="ri-dashboard-3-line text-lg"></i><span>Control de Clínicas</span>
+                    </a>
+                </div>
+
+                <!-- MENU: DIRECTOR/A -->
+                <div id="nav-director" class="nav-group space-y-1 hidden">
+                    <p class="px-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2">Clínica</p>
+                    <a href="#" class="nav-link flex items-center space-x-3 px-3 py-2.5 rounded-lg bg-indigo-600/10 text-indigo-400 font-medium text-sm">
+                        <i class="ri-money-dollar-circle-line text-lg"></i><span>Finanzas & Pagos</span>
+                    </a>
+                    <a href="#" class="nav-link flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-400 hover:bg-slate-800 text-sm">
+                        <i class="ri-user-heart-line text-lg"></i><span>Expedientes</span>
+                    </a>
+                </div>
+
+                <!-- MENU: STAFF OPERATIVO -->
+                <div id="nav-staff" class="nav-group space-y-1 hidden">
+                    <p class="px-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2">Operativo</p>
+                    <a href="#" class="nav-link flex items-center space-x-3 px-3 py-2.5 rounded-lg bg-indigo-600/10 text-indigo-400 font-medium text-sm">
+                        <i class="ri-user-voice-line text-lg"></i><span>Mis Pacientes</span>
+                    </a>
+                </div>
+            </nav>
+        </div>
+
+        <!-- ========================================================================= -->
+        <!-- BLOQUE 2: SIMULADOR DE ROLES (SOLO PARA MODO DESARROLLO)                  -->
+        <!-- ========================================================================= -->
+        <div class="bg-slate-900 border border-slate-800 p-3 rounded-xl mt-4">
+            <label class="text-[11px] text-slate-400 font-medium block mb-1.5"><i class="ri-bug-line"></i> Modo Prueba (Rol):</label>
+            <select id="role-selector" onchange="changeRole(this.value)" class="w-full bg-slate-950 border border-slate-700 text-xs text-white rounded-lg p-2 outline-none">
+                <option value="super_admin" selected>1. Alex (Master SaaS)</option>
+                <option value="director">2. Director/a (Clínica)</option>
+                <option value="staff">3. Terapeuta (Operativo)</option>
+            </select>
+        </div>
+    </aside>
+
+    <!-- ========================================================================= -->
+    <!-- BLOQUE 3: ÁREA CENTRAL (HEADER Y PANTALLAS DINÁMICAS)                     -->
+    <!-- ========================================================================= -->
+    <main class="flex-1 flex flex-col min-w-0 overflow-hidden bg-slate-900">
+        
+        <!-- HEADER SUPERIOR (DATOS DEL USUARIO LOGUEADO) -->
+        <header class="h-16 bg-slate-950/80 border-b border-slate-800 flex items-center justify-between px-6">
+            <div class="flex items-center space-x-3">
+                <span class="text-xs text-slate-400">Sede Activa:</span>
+                <span class="text-sm font-semibold text-slate-200 bg-slate-800 px-3 py-1 rounded-full border border-slate-700">RehabOS Central</span>
+            </div>
+            <div class="flex items-center space-x-4">
+                <div class="flex items-center space-x-3 pl-4 border-l border-slate-800">
+                    <div id="user-avatar" class="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-bold text-white">A</div>
+                    <div>
+                        <p id="user-name-display" class="text-xs font-semibold text-white">Alex Black</p>
+                        <p id="user-role-display" class="text-[10px] text-slate-400">Super Admin (CTO)</p>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- CONTENEDOR DE PANTALLAS -->
+        <div class="flex-1 overflow-y-auto p-6">
+            
+            <!-- --------------------------------------------------------------------- -->
+            <!-- VISTA 1: ALEX (CALCULADORA DE VENTAS Y ROI)                           -->
+            <!-- --------------------------------------------------------------------- -->
+            <section id="view-super-admin" class="view-panel space-y-6">
+                <div>
+                    <h2 class="text-2xl font-bold text-white">Centro de Ventas y Clínicas</h2>
+                    <p class="text-xs text-slate-400">Calculadora comercial para demostrar el Retorno de Inversión (ROI) a nuevos clientes.</p>
+                </div>
+
+                <div class="bg-slate-950 rounded-xl border border-slate-800 p-6 shadow-2xl">
+                    <div class="flex items-center space-x-3 mb-6">
+                        <div class="bg-emerald-500/10 text-emerald-400 p-2.5 rounded-xl border border-emerald-500/20">
+                            <i class="ri-calculator-line text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-white">Calculadora de Impacto RehabOS</h3>
+                            <p class="text-xs text-slate-400">Ajusta los números en vivo con la dirección de la clínica.</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Inputs -->
+                        <div class="space-y-4">
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-400 mb-1">Cuota de la Clínica ($)</label>
+                                    <input type="number" id="calc-cuota" value="1000" oninput="calcularROI()" class="w-full bg-slate-900 border border-slate-700 text-sm text-white rounded-lg p-2.5 outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-400 mb-1">Frecuencia</label>
+                                    <select id="calc-frecuencia" onchange="calcularROI()" class="w-full bg-slate-900 border border-slate-700 text-sm text-white rounded-lg p-2.5 outline-none">
+                                        <option value="semanal" selected>Semanal</option>
+                                        <option value="mensual">Mensual</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-400 mb-1">Pacientes Atraídos</label>
+                                    <input type="number" id="calc-pacientes" value="2" oninput="calcularROI()" class="w-full bg-slate-900 border border-slate-700 text-sm text-white rounded-lg p-2.5 outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-400 mb-1">Meses de Tratamiento</label>
+                                    <input type="number" id="calc-meses" value="12" oninput="calcularROI()" class="w-full bg-slate-900 border border-slate-700 text-sm text-white rounded-lg p-2.5 outline-none">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-400 mb-1">Plan RehabOS Elegido</label>
+                                <select id="calc-tier" onchange="calcularROI()" class="w-full bg-slate-900 border border-slate-700 text-sm text-indigo-400 font-bold rounded-lg p-2.5 outline-none">
+                                    <option value="basico">Tier Básico ($10k Setup + $6,000/mes)</option>
+                                    <option value="pro" selected>Tier Pro ($12k Setup + $7,500/mes)</option>
+                                    <option value="enterprise">Tier Enterprise ($15k Setup + $10,000/mes)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Resultados -->
+                        <div class="bg-slate-900 p-5 rounded-xl border border-slate-800 flex flex-col justify-center space-y-4">
+                            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                                <span class="text-xs text-slate-400 uppercase">Ingreso Nuevo para Clínica</span>
+                                <span id="res-ingreso" class="text-xl font-bold text-emerald-400">$104,000</span>
+                            </div>
+                            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                                <span class="text-xs text-slate-400 uppercase">Costo Total RehabOS</span>
+                                <span id="res-costo" class="text-xl font-bold text-rose-400">$94,500</span>
+                            </div>
+                            <div class="bg-slate-950 p-4 rounded-lg border border-slate-800">
+                                <span class="text-xs text-slate-400 uppercase font-semibold">Ganancia Neta Extra Clínica</span>
+                                <p id="res-neto" class="text-3xl font-black text-indigo-400 mt-1">+$9,500</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- --------------------------------------------------------------------- -->
+            <!-- VISTA 2: DIRECTOR/A (CONTROL FINANCIERO DE LA CLÍNICA)                -->
+            <!-- --------------------------------------------------------------------- -->
+            <section id="view-director" class="view-panel space-y-6 hidden">
+                <div>
+                    <h2 class="text-2xl font-bold text-white">Panel de Finanzas y Cobranza</h2>
+                    <p class="text-xs text-slate-400">Control de cuotas y semáforo de pagos de la clínica.</p>
+                </div>
+                <!-- Tarjetas Ejemplo -->
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="bg-slate-950 p-4 rounded-xl border border-slate-800">
+                        <p class="text-xs text-slate-400">Ingresos de la Semana</p>
+                        <p class="text-2xl font-bold text-emerald-400 mt-1">$14,000</p>
+                    </div>
+                    <div class="bg-slate-950 p-4 rounded-xl border border-slate-800">
+                        <p class="text-xs text-slate-400">Pacientes Activos</p>
+                        <p class="text-2xl font-bold text-white mt-1">18</p>
+                    </div>
+                    <div class="bg-slate-950 p-4 rounded-xl border border-slate-800">
+                        <p class="text-xs text-slate-400">Pagos Vencidos</p>
+                        <p class="text-2xl font-bold text-rose-400 mt-1">3</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- --------------------------------------------------------------------- -->
+            <!-- VISTA 3: STAFF OPERATIVO (PSICÓLOGOS Y CUIDADORES)                    -->
+            <!-- --------------------------------------------------------------------- -->
+            <section id="view-staff" class="view-panel space-y-6 hidden">
+                <div>
+                    <h2 class="text-2xl font-bold text-white">Módulo Operativo Clínico</h2>
+                    <p class="text-xs text-slate-400">Expedientes y notas rápidas de evolución.</p>
+                </div>
+                <div class="bg-slate-950 p-6 rounded-xl border border-slate-800 text-center">
+                    <i class="ri-shield-check-fill text-4xl text-indigo-400 mb-2"></i>
+                    <h3 class="text-white font-bold">Bienvenido, Equipo Operativo</h3>
+                    <p class="text-sm text-slate-400 mt-1">Próximamente aquí verás la lista de tus pacientes asignados para agregar sus notas rápidas con un clic.</p>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- ========================================================================= -->
+    <!-- BLOQUE 4: SCRIPTS (LÓGICA JAVASCRIPT DE LA PÁGINA)                        -->
+    <!-- ========================================================================= -->
+    <script>
+        // LÓGICA PARA EL SIMULADOR DE ROLES
+        const profiles = {
+            super_admin: { name: "Alex Black", role: "Super Admin (CTO)", avatar: "A", badge: "Master", view: "view-super-admin", nav: "nav-super-admin" },
+            director: { name: "Director/a General", role: "Finanzas y Gestión", avatar: "D", badge: "Director", view: "view-director", nav: "nav-director" },
+            staff: { name: "Terapeuta", role: "Módulo Clínico", avatar: "T", badge: "Staff", view: "view-staff", nav: "nav-staff" }
+        };
+
+        function changeRole(roleKey) {
+            const profile = profiles[roleKey];
+            document.getElementById('user-name-display').innerText = profile.name;
+            document.getElementById('user-role-display').innerText = profile.role;
+            document.getElementById('user-avatar').innerText = profile.avatar;
+            document.getElementById('role-badge').innerText = profile.badge;
+
+            document.querySelectorAll('.view-panel').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.nav-group').forEach(el => el.classList.add('hidden'));
+            
+            document.getElementById(profile.view).classList.remove('hidden');
+            document.getElementById(profile.nav).classList.remove('hidden');
+        }
+
+        // LÓGICA DE LA CALCULADORA COMERCIAL (VISTA ALEX)
+        function calcularROI() {
+            const cuota = parseFloat(document.getElementById('calc-cuota').value) || 0;
+            const frecuencia = document.getElementById('calc-frecuencia').value;
+            const pacientes = parseInt(document.getElementById('calc-pacientes').value) || 0;
+            const meses = parseInt(document.getElementById('calc-meses').value) || 1;
+            const tier = document.getElementById('calc-tier').value;
+
+            let pagosPorMes = frecuencia === 'semanal' ? 4.333 : 1;
+            const ingresoTotal = cuota * pagosPorMes * meses * pacientes;
+
+            let setup = 12000, mensualidad = 7500;
+            if (tier === 'basico') { setup = 10000; mensualidad = 6000; }
+            if (tier === 'enterprise') { setup = 15000; mensualidad = 10000; }
+
+            const costoReal = setup + (mensualidad * meses);
+            const neto = ingresoTotal - costoReal;
+
+            document.getElementById('res-ingreso').innerText = '$' + ingresoTotal.toLocaleString('es-MX');
+            document.getElementById('res-costo').innerText = '$' + costoReal.toLocaleString('es-MX');
+            
+            const elNeto = document.getElementById('res-neto');
+            if (neto >= 0) {
+                elNeto.innerText = '+$' + neto.toLocaleString('es-MX');
+                elNeto.className = 'text-3xl font-black text-indigo-400 mt-1';
+            } else {
+                elNeto.innerText = '-$' + Math.abs(neto).toLocaleString('es-MX');
+                elNeto.className = 'text-3xl font-black text-rose-400 mt-1';
+            }
+        }
+
+        calcularROI();
+    </script>
+</body>
+</html>
