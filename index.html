@@ -156,10 +156,11 @@
                         <p class="text-xs text-slate-400 mt-1">Monitorea el estado de cuenta. <span class="text-emerald-400 font-bold">(Datos Reales de Nube)</span></p>
                     </div>
                     <div class="flex space-x-3">
-                        <button class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold px-4 py-2.5 rounded-lg border border-slate-700 flex items-center space-x-2 transition">
-                            <i class="ri-file-excel-2-line text-emerald-500"></i><span class="hidden sm:inline">Exportar Listas</span>
-                        </button>
-                        <!-- BOTÓN QUE ACTIVA EL MODAL -->
+<button onclick="exportarTablaACSV()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold px-4 py-2.5 rounded-lg border border-slate-700 flex items-center space-x-2 transition cursor-pointer">
+    <i class="ri-file-excel-2-line text-emerald-500"></i><span class="hidden sm:inline">Exportar Listas</span>
+</button>
+
+<!-- BOTÓN QUE ACTIVA EL MODAL -->
                         <button onclick="abrirModalPaciente()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-4 py-2.5 rounded-lg shadow-lg flex items-center space-x-2 transition">
                             <i class="ri-user-add-line"></i><span>+ Nuevo Paciente</span>
                         </button>
@@ -262,7 +263,7 @@
             </form>
         </div>
     </div>
-    
+
             <!-- ===================================================================== -->
             <!-- VISTA 3: STAFF OPERATIVO RESTAURADA                                   -->
             <!-- ===================================================================== -->
