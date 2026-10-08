@@ -86,7 +86,7 @@
         <div class="flex-1 overflow-y-auto p-6">
             
             <!-- ===================================================================== -->
-            <!-- VISTA 1: ALEX (CALCULADORA DE VENTAS) RESTAURADA                      -->
+            <!-- VISTA 1: ALEX (CALCULADORA DE VENTAS)                                 -->
             <!-- ===================================================================== -->
             <section id="view-super-admin" class="view-panel space-y-6">
                 <div>
@@ -124,6 +124,7 @@
                                 <select id="calc-tier" onchange="calcularROI()" class="w-full bg-slate-900 border border-slate-700 text-sm text-indigo-400 font-bold rounded-lg p-2.5 outline-none">
                                     <option value="basico">Tier Básico ($10k Setup + $6,000/mes)</option>
                                     <option value="pro" selected>Tier Pro ($12k Setup + $7,500/mes)</option>
+                                    <option value="enterprise">Tier Enterprise ($15k Setup + $10,000/mes)</option>
                                 </select>
                             </div>
                         </div>
@@ -223,95 +224,115 @@
     </main>
 
     <!-- ========================================================================= -->
-    <!-- BLOQUE 4: LÓGICA JAVASCRIPT Y CONEXIÓN CORRECTA A SUPABASE                -->
+    <!-- BLOQUE 4: LÓGICA JAVASCRIPT BLINDADA Y CONEXIÓN A SUPABASE                -->
     <!-- ========================================================================= -->
     <script>
-        // 1. CONFIGURACIÓN DE SUPABASE (Corregida sin el /rest/v1/)
-        const supabaseUrl = 'https://xykagyyawaohseyxbhrv.supabase.co';
-        const supabaseKey = 'sb_publishable_DDbj7Wzjq7fE2-J1kw3H2Q_tDskFrhe'; 
-        
-        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-
-        // 2. LÓGICA DE LA CALCULADORA
+        // 1. LÓGICA DE LA CALCULADORA (BLINDADA CONTRA ERRORES)
         function calcularROI() {
-            const cuota = parseFloat(document.getElementById('calc-cuota').value) || 0;
-            const frecuencia = document.getElementById('calc-frecuencia').value;
-            const pacientes = parseInt(document.getElementById('calc-pacientes').value) || 0;
-            const meses = parseInt(document.getElementById('calc-meses').value) || 1;
-            const tier = document.getElementById('calc-tier').value;
+            try {
+                const cuota = parseFloat(document.getElementById('calc-cuota').value) || 0;
+                const frecuencia = document.getElementById('calc-frecuencia').value;
+                const pacientes = parseInt(document.getElementById('calc-pacientes').value) || 0;
+                const meses = parseInt(document.getElementById('calc-meses').value) || 1;
+                const tier = document.getElementById('calc-tier').value;
 
-            let pagosPorMes = frecuencia === 'semanal' ? 4.333 : 1;
-            const ingresoTotal = cuota * pagosPorMes * meses * pacientes;
+                let pagosPorMes = frecuencia === 'semanal' ? 4.333 : 1;
+                const ingresoTotal = cuota * pagosPorMes * meses * pacientes;
 
-            let setup = 12000, mensualidad = 7500;
-            if (tier === 'basico') { setup = 10000; mensualidad = 6000; }
+                let setup = 12000, mensualidad = 7500;
+                if (tier === 'basico') { setup = 10000; mensualidad = 6000; }
+                if (tier === 'enterprise') { setup = 15000; mensualidad = 10000; } // <-- ¡AQUÍ ESTÁ TU TIER DE REGRESO!
 
-            const costoReal = setup + (mensualidad * meses);
-            const neto = ingresoTotal - costoReal;
+                const costoReal = setup + (mensualidad * meses);
+                const neto = ingresoTotal - costoReal;
 
-            document.getElementById('res-ingreso').innerText = '$' + ingresoTotal.toLocaleString('es-MX');
-            document.getElementById('res-costo').innerText = '$' + costoReal.toLocaleString('es-MX');
-            
-            const elNeto = document.getElementById('res-neto');
-            if (neto >= 0) {
-                elNeto.innerText = '+$' + neto.toLocaleString('es-MX');
-                elNeto.className = 'text-3xl font-black text-indigo-400 mt-1';
-            } else {
-                elNeto.innerText = '-$' + Math.abs(neto).toLocaleString('es-MX');
-                elNeto.className = 'text-3xl font-black text-rose-400 mt-1';
+                document.getElementById('res-ingreso').innerText = '$' + ingresoTotal.toLocaleString('es-MX', {maximumFractionDigits: 0});
+                document.getElementById('res-costo').innerText = '$' + costoReal.toLocaleString('es-MX', {maximumFractionDigits: 0});
+                
+                const elNeto = document.getElementById('res-neto');
+                if (neto >= 0) {
+                    elNeto.innerText = '+$' + neto.toLocaleString('es-MX', {maximumFractionDigits: 0});
+                    elNeto.className = 'text-3xl font-black text-indigo-400 mt-1';
+                } else {
+                    elNeto.innerText = '-$' + Math.abs(neto).toLocaleString('es-MX', {maximumFractionDigits: 0});
+                    elNeto.className = 'text-3xl font-black text-rose-400 mt-1';
+                }
+            } catch (error) {
+                console.error("Calculadora Error:", error);
             }
         }
 
-        // 3. FUNCIÓN PARA CARGAR DATOS REALES DE SUPABASE
+        // 2. CONEXIÓN A SUPABASE (MODO SEGURO)
+        let supabaseClient = null;
+        function getSupabase() {
+            if (!supabaseClient && window.supabase) {
+                // AQUÍ YA INSERTÉ TUS LLAVES DIRECTAMENTE
+                supabaseClient = window.supabase.createClient(
+                    'https://xykagyyawaohseyxbhrv.supabase.co', 
+                    'sb_publishable_DDbj7Wzjq7fE2-J1kw3H2Q_tDskFrhe'
+                );
+            }
+            return supabaseClient;
+        }
+
+        // 3. FUNCIÓN PARA CARGAR DATOS DE PACIENTES
         async function cargarPacientes() {
             const tbody = document.getElementById('tabla-pacientes');
+            const cliente = getSupabase();
             
-            const { data: pacientes, error } = await supabase
-                .from('pacientes')
-                .select('*')
-                .order('numero_expediente', { ascending: true });
-
-            if (error) {
-                tbody.innerHTML = `<tr><td colspan="5" class="px-4 py-4 text-center text-rose-500">Error de conexión: ${error.message}</td></tr>`;
+            if (!cliente) {
+                tbody.innerHTML = `<tr><td colspan="5" class="px-4 py-4 text-center text-rose-500">Error de conexión: No se pudo conectar a internet o a la nube.</td></tr>`;
                 return;
             }
 
-            if (pacientes.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="px-4 py-4 text-center text-slate-500">No hay pacientes registrados aún.</td></tr>`;
-                return;
-            }
+            try {
+                const { data: pacientes, error } = await cliente
+                    .from('pacientes')
+                    .select('*')
+                    .order('numero_expediente', { ascending: true });
 
-            tbody.innerHTML = '';
+                if (error) throw error;
 
-            pacientes.forEach(paciente => {
-                const tr = document.createElement('tr');
-                tr.className = 'hover:bg-slate-900/50 transition';
-                
-                let estatusHtml = `<span class="inline-flex items-center px-2 py-1 rounded bg-slate-800 text-slate-400 border border-slate-700 text-[10px] font-bold">${paciente.estatus}</span>`;
-                if (paciente.estatus === 'Activo') {
-                    estatusHtml = `<span class="inline-flex items-center px-2 py-1 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold"><i class="ri-checkbox-circle-fill mr-1"></i> Activo</span>`;
+                if (!pacientes || pacientes.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="5" class="px-4 py-4 text-center text-slate-500">No hay pacientes registrados aún.</td></tr>`;
+                    return;
                 }
 
-                tr.innerHTML = `
-                    <td class="px-4 py-3">
-                        <div class="font-bold text-white">EXP-${paciente.numero_expediente}</div>
-                        <div class="text-[10px] text-slate-400">${paciente.nombre_completo}</div>
-                    </td>
-                    <td class="px-4 py-3">
-                        <div class="text-slate-200">${paciente.nombre_familiar}</div>
-                        <div class="text-[10px] text-slate-500"><i class="ri-phone-line text-indigo-400"></i> ${paciente.telefono_familiar}</div>
-                    </td>
-                    <td class="px-4 py-3 font-medium text-slate-200">$${paciente.cuota_acordada} / ${paciente.periodicidad_pago}</td>
-                    <td class="px-4 py-3">${estatusHtml}</td>
-                    <td class="px-4 py-3 text-right">
-                        <button class="text-indigo-400 hover:text-white px-2 py-1 rounded bg-indigo-500/10 hover:bg-indigo-500/30 transition text-[10px] font-bold">Ver Cuenta</button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
+                tbody.innerHTML = '';
+
+                pacientes.forEach(paciente => {
+                    const tr = document.createElement('tr');
+                    tr.className = 'hover:bg-slate-900/50 transition';
+                    
+                    let estatusHtml = `<span class="inline-flex items-center px-2 py-1 rounded bg-slate-800 text-slate-400 border border-slate-700 text-[10px] font-bold">${paciente.estatus}</span>`;
+                    if (paciente.estatus === 'Activo') {
+                        estatusHtml = `<span class="inline-flex items-center px-2 py-1 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold"><i class="ri-checkbox-circle-fill mr-1"></i> Activo</span>`;
+                    }
+
+                    tr.innerHTML = `
+                        <td class="px-4 py-3">
+                            <div class="font-bold text-white">EXP-${paciente.numero_expediente}</div>
+                            <div class="text-[10px] text-slate-400">${paciente.nombre_completo}</div>
+                        </td>
+                        <td class="px-4 py-3">
+                            <div class="text-slate-200">${paciente.nombre_familiar}</div>
+                            <div class="text-[10px] text-slate-500"><i class="ri-phone-line text-indigo-400"></i> ${paciente.telefono_familiar}</div>
+                        </td>
+                        <td class="px-4 py-3 font-medium text-slate-200">$${paciente.cuota_acordada} / ${paciente.periodicidad_pago}</td>
+                        <td class="px-4 py-3">${estatusHtml}</td>
+                        <td class="px-4 py-3 text-right">
+                            <button class="text-indigo-400 hover:text-white px-2 py-1 rounded bg-indigo-500/10 hover:bg-indigo-500/30 transition text-[10px] font-bold">Ver Cuenta</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (error) {
+                console.error(error);
+                tbody.innerHTML = `<tr><td colspan="5" class="px-4 py-4 text-center text-rose-500">Error leyendo base de datos: ${error.message}</td></tr>`;
+            }
         }
 
-        // 4. SIMULADOR DE ROLES
+        // 4. SIMULADOR DE ROLES Y PESTAÑAS (BLINDADO)
         const profiles = {
             super_admin: { name: "Alex Black", role: "Super Admin (CTO)", avatar: "A", badge: "Master", view: "view-super-admin", nav: "nav-super-admin" },
             director: { name: "Director/a General", role: "Finanzas y Gestión", avatar: "D", badge: "Director", view: "view-director", nav: "nav-director" },
@@ -319,24 +340,28 @@
         };
 
         function changeRole(roleKey) {
-            const profile = profiles[roleKey];
-            document.getElementById('user-name-display').innerText = profile.name;
-            document.getElementById('user-role-display').innerText = profile.role;
-            document.getElementById('user-avatar').innerText = profile.avatar;
-            document.getElementById('role-badge').innerText = profile.badge;
+            try {
+                const profile = profiles[roleKey];
+                document.getElementById('user-name-display').innerText = profile.name;
+                document.getElementById('user-role-display').innerText = profile.role;
+                document.getElementById('user-avatar').innerText = profile.avatar;
+                document.getElementById('role-badge').innerText = profile.badge;
 
-            document.querySelectorAll('.view-panel').forEach(el => el.classList.add('hidden'));
-            document.querySelectorAll('.nav-group').forEach(el => el.classList.add('hidden'));
-            
-            document.getElementById(profile.view).classList.remove('hidden');
-            document.getElementById(profile.nav).classList.remove('hidden');
+                document.querySelectorAll('.view-panel').forEach(el => el.classList.add('hidden'));
+                document.querySelectorAll('.nav-group').forEach(el => el.classList.add('hidden'));
+                
+                document.getElementById(profile.view).classList.remove('hidden');
+                document.getElementById(profile.nav).classList.remove('hidden');
 
-            if (roleKey === 'director') {
-                cargarPacientes();
+                if (roleKey === 'director') {
+                    cargarPacientes();
+                }
+            } catch (error) {
+                console.error("Error cambiando pantalla:", error);
             }
         }
 
-        // Iniciar Calculadora por defecto
+        // Ejecutar cálculo inicial al abrir la página
         calcularROI();
     </script>
 </body>
