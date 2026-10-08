@@ -275,15 +275,13 @@
             return supabaseClient;
         }
 
-        // 3. FUNCIÓN PARA CARGAR DATOS DE PACIENTES
+// 3. FUNCIÓN PARA CARGAR DATOS DE PACIENTES (VERSIÓN DUAL)
         async function cargarPacientes() {
             const tbody = document.getElementById('tabla-pacientes');
+            const gridStaff = document.querySelector('#view-staff .grid'); // Atrapa el contenedor de tarjetas
             const cliente = getSupabase();
             
-            if (!cliente) {
-                tbody.innerHTML = `<tr><td colspan="5" class="px-4 py-4 text-center text-rose-500">Error de conexión: No se pudo conectar a internet o a la nube.</td></tr>`;
-                return;
-            }
+            if (!cliente) return;
 
             try {
                 const { data: pacientes, error } = await cliente
@@ -295,12 +293,16 @@
 
                 if (!pacientes || pacientes.length === 0) {
                     tbody.innerHTML = `<tr><td colspan="5" class="px-4 py-4 text-center text-slate-500">No hay pacientes registrados aún.</td></tr>`;
+                    if(gridStaff) gridStaff.innerHTML = `<p class="text-slate-500 text-sm col-span-full">No hay pacientes activos asignados.</p>`;
                     return;
                 }
 
+                // Limpiamos ambas pantallas antes de inyectar los datos nuevos
                 tbody.innerHTML = '';
+                if(gridStaff) gridStaff.innerHTML = '';
 
                 pacientes.forEach(paciente => {
+                    // --- 1. INYECCIÓN PARA LA TABLA DEL DIRECTOR ---
                     const tr = document.createElement('tr');
                     tr.className = 'hover:bg-slate-900/50 transition';
                     
@@ -325,13 +327,37 @@
                         </td>
                     `;
                     tbody.appendChild(tr);
+
+                    // --- 2. INYECCIÓN PARA LAS TARJETAS DEL STAFF ---
+                    // Solo mostramos pacientes "Activos" a los psicólogos y cuidadores
+                    if (gridStaff && paciente.estatus === 'Activo') {
+                        const tarjeta = document.createElement('div');
+                        tarjeta.className = 'bg-slate-950 p-5 rounded-xl border border-slate-800 flex flex-col justify-between hover:border-slate-600 transition';
+                        tarjeta.innerHTML = `
+                            <div class="flex justify-between items-start mb-5">
+                                <div>
+                                    <h3 class="font-bold text-white text-sm">${paciente.nombre_completo}</h3>
+                                    <p class="text-[10px] text-indigo-400 font-semibold mt-0.5">Expediente: EXP-${paciente.numero_expediente}</p>
+                                </div>
+                                <div class="w-10 h-10 bg-slate-800 rounded-full border-2 border-slate-700 flex items-center justify-center">
+                                    <i class="ri-user-smile-line text-slate-400 text-xl"></i>
+                                </div>
+                            </div>
+                            <div class="space-y-2.5">
+                                <button class="w-full bg-indigo-600/10 hover:bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 text-xs font-bold py-2.5 rounded-lg transition flex items-center justify-center space-x-2">
+                                    <i class="ri-edit-2-line text-lg"></i><span>+ Nota Rápida (1 Clic)</span>
+                                </button>
+                            </div>
+                        `;
+                        gridStaff.appendChild(tarjeta);
+                    }
                 });
             } catch (error) {
                 console.error(error);
-                tbody.innerHTML = `<tr><td colspan="5" class="px-4 py-4 text-center text-rose-500">Error leyendo base de datos: ${error.message}</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" class="px-4 py-4 text-center text-rose-500">Error leyendo base de datos.</td></tr>`;
             }
         }
-
+        
         // 4. SIMULADOR DE ROLES Y PESTAÑAS (BLINDADO)
         const profiles = {
             super_admin: { name: "Alex Black", role: "Super Admin (CTO)", avatar: "A", badge: "Master", view: "view-super-admin", nav: "nav-super-admin" },
